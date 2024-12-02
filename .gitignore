@@ -1,5 +1,6 @@
-input.txt
+*input.txt
 torchenv
+.history
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

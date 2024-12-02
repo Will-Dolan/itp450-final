@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch
+from torch.nn import functional as F
 
 class SelfAttention(nn.Module):
     def __init__(self,embed_dim):
@@ -58,4 +59,5 @@ class SelfAttention(nn.Module):
 
 """ 
 SA=SelfAttention(embed_dim)
-scores=SA(org_embd_context)         """
+scores=SA(org_embd_context)         
+"""

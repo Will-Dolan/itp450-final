@@ -22,7 +22,7 @@ if __name__=='__main__':
 	args = parser.parse_args()
 
 
-	pipeline = Pipeline()
+	pipeline = Pipeline(args)
 	pipeline.configure_gpus()
 	pipeline.load_dataset()
 	pipeline.load_model()

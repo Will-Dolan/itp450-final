@@ -2,14 +2,6 @@ import torch.nn as nn
 import torch
 from torch.nn import functional as F
 
-# 1) Specify the number of heads
-# TODO: move this to model building
-n_heads = 5
-head_size = embed_dim // 5
-
-dropout = 0. # The dropout fraction!
-
-# 2) Single head attention
 class SingleHeadAttention(nn.Module):
     def __init__(self,embed_dim,head_size):
         super().__init__()
