@@ -1,19 +1,30 @@
+import random
 import tiktoken
 import torch
+import datasets
+from torch.utils.data import Dataset, DataLoader
+import datasets
+import multiprocessing
+import numpy as np
+from tqdm import tqdm
+from sklearn.model_selection import train_test_split
 
 class Data:
-	def __init__(self, batch_size, seq_size):
-		# TODO: take in input to configure these
-		self.train_data = []
+	def __init__(self, batch_size, seq_size, num_samples=10000):
+		self.data_text = []		
+		self.data = []
+		self.train_data = []		
 		self.val_data = []
-		self.seq_size = seq_size
 		self.batch_size = batch_size
-		self.data_path = 'input.txt'
+		self.seq_size = seq_size
+		self.num_samples = num_samples
 
 	def load_dataset(self):
-		# path is from TLD, where we run main
-		with open('data/input.txt', 'r', encoding='utf-8') as f:
-			self.text = f.read()
+		cores = multiprocessing.cpu_count()
+		# Load openwebtext dataset
+		print("Loading data...")
+		data_text = datasets.load_dataset('openwebtext', trust_remote_code=True, num_proc=cores//2)['train']
+		self.data_text = data_text.shuffle(seed=42).select(range(int(self.num_samples)))
 
 	def encode_data(self):
 		self.tokenizer = tiktoken.get_encoding('gpt2')
@@ -22,7 +33,18 @@ class Data:
 		self.encode = lambda s: self.tokenizer.encode(s)
 		self.decode = lambda l: self.tokenizer.decode(l)
 		# Encode the text and store it as a tensor
-		self.data = torch.tensor(self.encode(self.text.strip()), dtype=torch.long)
+		print("Encoding data...")
+		for text in tqdm(self.data_text):
+			encoded = self.encode(text['text'])
+			if(len(encoded) < self.seq_size): # TODO: add padding (optional)
+				context = encoded[0:-1]
+				target = encoded[1:]
+				self.data.append([context,target])
+			else:
+				i = random.randint(0,len(encoded)-self.seq_size-1)
+				context = torch.tensor(encoded[i:i+self.seq_size], dtype=torch.long)
+				target = torch.tensor(encoded[i+1:i+self.seq_size+1], dtype=torch.long)
+				self.data.append([context,target])
 
 		return self.vocab_size
 
@@ -42,13 +64,14 @@ class Data:
 		#
 		# return self.vocab_size
 
-	def split_data(self):
-		n = int(0.9*len(self.data))
-		self.train_data = self.data[:n]
-		self.val_data   = self.data[n:]
+	def split_dataset(self, val_split=0.2):
+		self.val_data = self.data[:int(self.num_samples*val_split)]
+		self.train_data = self.data[int(self.num_samples*val_split):]
+		self.val_dataloader = DataLoader(self.val_data, batch_size=self.batch_size, shuffle=True)
+		self.train_dataloader = DataLoader(self.train_data, batch_size=self.batch_size, shuffle=True)
 
 	def get_batch(self, split):
-		data = self.train_data if split=='train' else self.val_data
+		data = self.train_data_enc if split=='train' else self.val_data_enc
 
 		# Randomly select starting indices for the batch (0, len(data)-seq_size)
 		# Do it for batch_size number of times and store in a torch vector

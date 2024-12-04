@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from models.Transformer import Transformer
-
+from tqdm import tqdm
 from data.Data import Data
 
 """ 
@@ -16,13 +16,9 @@ TODO:
 class Pipeline:
 	def __init__(self, args):
 		self.args = args
-		# TODO: configurable datapath 
-
-		self.seq_size = 512  # Default sequence size
-		self.batch_size = args.batch_size  # From args
-
-		# Necessary configurations
-		self.epochs = args.epochs
+		self.seq_size = 128
+		self.batch_size = 64 # args.batch_size 
+		self.epochs = 20 # args.epochs
 		self.saved_model_pathway = args.saved_model_pathway
 		self.seed = args.seed
 		self.experiment_name = args.experiment_name
@@ -37,12 +33,11 @@ class Pipeline:
 		pass
 
 	def load_dataset(self):
-		batch_size=32
-		self.seq_size=512
-		self.dataset = Data(batch_size, self.seq_size)
+		val_split = 0.2
+		self.dataset = Data(self.batch_size, self.seq_size, num_samples=10000)
 		self.dataset.load_dataset()
 		self.vocab_size = self.dataset.encode_data()
-		self.dataset.split_data()
+		self.dataset.split_dataset(val_split)
 
 	def load_model(self):
 		pass
@@ -56,7 +51,6 @@ class Pipeline:
 		n_layers=8
 		dropout=0.1 # hardcoded in MHA as 0
 		learning_rate = 0.0005
-		n_epoch = 2000
 		print_interval=100
 		eval_iters=200 # not used
 
@@ -72,7 +66,7 @@ class Pipeline:
 		self.model = self.model.to(self.device)
 
 		# Print the number of parameters in the model
-		print(f"num trainable params = {sum(p.numel() for p in self.model.parameters() if p.requires_grad)}")
+		print(f"Num trainable params = {sum(p.numel() for p in self.model.parameters() if p.requires_grad)}")
 		print('Parameters size:', len(list(self.model.parameters())))
 
 		# Optimizer
@@ -81,31 +75,31 @@ class Pipeline:
 
 		# Training Loop
 		start=time.time()
-		for epoch in range(n_epoch):
+		for epoch in range(self.epochs):
 			self.model.train()
 			optimizer.zero_grad()
-			
-			# get a batch of data
-			context, target=self.dataset.get_batch('train')
-			context.to(self.device)
-			target.to(self.device)
+			print("Epoch " + str(epoch))
+			for context, target in tqdm(self.dataset.train_dataloader):
+				# context, target=self.dataset.get_batch('train')
+				context.to(self.device)
+				target.to(self.device)
 
-			# pass through the model (context,target)
-			_, train_losses = self.model(context, target)
-			losses['train'] = train_losses
-			train_losses.backward()
-			optimizer.step()
+				# pass through the model (context,target)
+				_, train_losses = self.model(context, target)
+				losses['train'] = train_losses
+				train_losses.backward()
+				optimizer.step()
 
 			with torch.no_grad():
-				val_context, val_target = self.dataset.get_batch('val')
-				val_context = val_context.to(self.device)
-				val_target = val_target.to(self.device)
-				_, val_losses = self.model(val_context, val_target)
-				losses['val'] = val_losses
+				for val_context, val_target in self.dataset.val_dataloader:
+					# val_context, val_target = self.dataset.get_batch('val')
+					val_context = val_context.to(self.device)
+					val_target = val_target.to(self.device)
+					_, val_losses = self.model(val_context, val_target)
+					losses['val'] = val_losses
 
 
 			if epoch % print_interval == 0 or epoch == n_epoch - 1 or epoch == 0:
-				## HOMEWORK: Calculate the training and validation loss using the estimate_loss function
 				print(f"[{(time.time()-start):.2f}s] step {epoch}: train loss {losses['train']}, val loss {losses['val']}")
     
 		print(f'Training took {time.time()-start} seconds')
