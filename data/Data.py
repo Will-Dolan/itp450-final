@@ -70,21 +70,21 @@ class Data:
 		self.val_dataloader = DataLoader(self.val_data, batch_size=self.batch_size, shuffle=True)
 		self.train_dataloader = DataLoader(self.train_data, batch_size=self.batch_size, shuffle=True)
 
-	def get_batch(self, split):
-		data = self.train_data_enc if split=='train' else self.val_data_enc
+	# def get_batch(self, split):
+	# 	data = self.train_data_enc if split=='train' else self.val_data_enc
 
-		# Randomly select starting indices for the batch (0, len(data)-seq_size)
-		# Do it for batch_size number of times and store in a torch vector
-		start_ind = torch.randint(0,len(data)-self.seq_size,(self.batch_size,))
-		#print(f'start_ind={start_ind}')
+	# 	# Randomly select starting indices for the batch (0, len(data)-seq_size)
+	# 	# Do it for batch_size number of times and store in a torch vector
+	# 	start_ind = torch.randint(0,len(data)-self.seq_size,(self.batch_size,))
+	# 	#print(f'start_ind={start_ind}')
 		
-		context=[]
-		target=[]
-		for i in start_ind:
-			context.append(data[i  :i+self.seq_size  ])
-			target.append (data[i+1:i+self.seq_size+1])
+	# 	context=[]
+	# 	target=[]
+	# 	for i in start_ind:
+	# 		context.append(data[i  :i+self.seq_size  ])
+	# 		target.append (data[i+1:i+self.seq_size+1])
 		
-		context = torch.stack(context) #converts from a list of tensors to a large tensor
-		target  = torch.stack(target)
+	# 	context = torch.stack(context) #converts from a list of tensors to a large tensor
+	# 	target  = torch.stack(target)
 
-		return context, target
+	# 	return context, target
