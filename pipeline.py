@@ -18,7 +18,20 @@ class Pipeline:
 		self.args = args
 		# TODO: configurable datapath 
 
-		# configurable params
+		self.seq_size = 512  # Default sequence size
+		self.batch_size = args.batch_size  # From args
+
+		# Necessary configurations
+		self.epochs = args.epochs
+		self.saved_model_pathway = args.saved_model_pathway
+		self.seed = args.seed
+		self.experiment_name = args.experiment_name
+		self.init_learning_rate = args.init_learning_rate
+
+		# Ensure reproducibility
+		if self.seed is not None:
+			torch.manual_seed(self.seed)
+			np.random.seed(self.seed)
 
 	def configure_gpus(self):
 		pass
@@ -73,7 +86,7 @@ class Pipeline:
 			optimizer.zero_grad()
 			
 			# get a batch of data
-			context,target=self.dataset.get_batch('train')
+			context, target=self.dataset.get_batch('train')
 			context.to(self.device)
 			target.to(self.device)
 
@@ -85,7 +98,8 @@ class Pipeline:
 
 			with torch.no_grad():
 				val_context, val_target = self.dataset.get_batch('val')
-				self.model.eval()
+				val_context = val_context.to(self.device)
+				val_target = val_target.to(self.device)
 				_, val_losses = self.model(val_context, val_target)
 				losses['val'] = val_losses
 

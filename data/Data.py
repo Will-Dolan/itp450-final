@@ -1,3 +1,4 @@
+import tiktoken
 import torch
 
 class Data:
@@ -15,21 +16,31 @@ class Data:
 			self.text = f.read()
 
 	def encode_data(self):
-		chars=sorted(set(self.text))
-		self.vocab_size=len(chars)
-		
-		c2i={c:i for i, c in enumerate(chars)} # character to integer
-		i2c={i:c for i, c in enumerate(chars)} # integer to character
-
-		# encode a string to a "list of integers"
-		self.encode=lambda s: [c2i[c] for c in s]
-
-		# decode a list of integers to a string
-		self.decode=lambda l: ''.join([i2c[i] for i in l])
-
-		self.data = torch.tensor(self.encode(self.text), dtype=torch.long)
+		self.tokenizer = tiktoken.get_encoding('gpt2')
+		self.vocab_size = self.tokenizer.n_vocab
+		# Set up encoding and decoding
+		self.encode = lambda s: self.tokenizer.encode(s)
+		self.decode = lambda l: self.tokenizer.decode(l)
+		# Encode the text and store it as a tensor
+		self.data = torch.tensor(self.encode(self.text.strip()), dtype=torch.long)
 
 		return self.vocab_size
+
+		# chars = sorted(set(self.text))
+		# self.vocab_size = len(chars)
+		#
+		# c2i = {c: i for i, c in enumerate(chars)}  # character to integer
+		# i2c = {i: c for i, c in enumerate(chars)}  # integer to character
+		#
+		# # encode a string to a "list of integers"
+		# self.encode = lambda s: [c2i[c] for c in s]
+		#
+		# # decode a list of integers to a string
+		# self.decode = lambda l: ''.join([i2c[i] for i in l])
+		#
+		# self.data = torch.tensor(self.encode(self.text), dtype=torch.long)
+		#
+		# return self.vocab_size
 
 	def split_data(self):
 		n = int(0.9*len(self.data))

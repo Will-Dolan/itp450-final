@@ -2,14 +2,17 @@ import torch.nn as nn
 import torch
 from torch.nn import functional as F
 from .AttentionBlock import AttentionBlock
+from tiktoken import get_encoding
 
 
 class Transformer(nn.Module):
     def __init__(self, embed_dim, n_heads, vocab_size, seq_size, n_layers, device):
         super().__init__()
         self.device = device
-        self.vocab_size = vocab_size
         self.seq_size = seq_size
+        # self.vocab_size = vocab_size
+        self.tokenizer = get_encoding('gpt2')
+        self.vocab_size = self.tokenizer.n_vocab
 
         # 1) Instantiating Token embedding
         self.TokenEmbedding = nn.Embedding(vocab_size, embed_dim) # output: [B,T,C]
@@ -31,6 +34,13 @@ class Transformer(nn.Module):
 
         # 5) Last Linear layer to go from [B,T,C] to [B,T,vocab_size]
         self.linearn = nn.Linear(embed_dim,vocab_size)
+
+    def encode(self, text: str) -> torch.Tensor:
+        tokens = self.tokenizer.encode(text, allowed_special="all")
+        return torch.tensor(tokens, dtype=torch.long, device=self.device)
+
+    def decode(self, tokens: torch.Tensor) -> str:
+        return self.tokenizer.decode(tokens.tolist())
     
     def forward(self,context, targets=None):
 
@@ -70,24 +80,42 @@ class Transformer(nn.Module):
 
         return y, loss
     
-    def generation(self, context, max_tokens):
-        # context has dimensions of [B, T]
-        for _ in range(max_tokens):
-            # make sure the context fits in the sequence length
-            context_crop = context[:, -self.seq_size:]
-            
-            # get the predictions
-            y, _ = self(context_crop)
+    # def generation(self, context, max_tokens):
+    #     # context has dimensions of [B, T]
+    #     for _ in range(max_tokens):
+    #         # make sure the context fits in the sequence length
+    #         context_crop = context[:, -self.seq_size:]
+    #
+    #         # get the predictions
+    #         y, _ = self(context_crop)
+    #
+    #         # focus only on the last token
+    #         y = y[:, -1, :] # becomes (B, C)
+    #
+    #         # apply softmax to get probabilities
+    #         probs = F.softmax(y, dim=-1) # (B, C)
+    #
+    #         # sample from the distribution
+    #         next_token = torch.multinomial(probs, num_samples=1) # (B, 1)
+    #
+    #         # append the sample to the running sequence
+    #         context = torch.cat((context, next_token), dim=1) # (B, T+1)
+    #     return context
 
-            # focus only on the last token
-            y = y[:, -1, :] # becomes (B, C)
+    def generation(self, context: str, max_tokens: int, temperature: float = 1.0) -> str:
+        self.eval()
+        with torch.no_grad():
+            context_tokens = self.encode(context).unsqueeze(0)
+            for _ in range(max_tokens):
+                context_crop = context_tokens[:, -self.seq_size:]
+                y, _ = self(context_crop)
+                y = y[:, -1, :]
+                probs = F.softmax(y / temperature, dim=-1)
+                next_token = torch.multinomial(probs, num_samples=1)
+                context_tokens = torch.cat((context_tokens, next_token), dim=1)
 
-            # apply softmax to get probabilities
-            probs = F.softmax(y, dim=-1) # (B, C)
-
-            # sample from the distribution
-            next_token = torch.multinomial(probs, num_samples=1) # (B, 1)
-
-            # append the sample to the running sequence
-            context = torch.cat((context, next_token), dim=1) # (B, T+1)
-        return context       
+                # Handle special end-of-sequence token
+                end_token = self.tokenizer.encode("<|endoftext|>")[0]
+                if next_token.item() == end_token:
+                    break
+            return self.decode(context_tokens.squeeze(0))
