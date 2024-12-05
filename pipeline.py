@@ -17,13 +17,13 @@ class Pipeline:
 	def __init__(self, args):
 		self.args = args
 		self.seq_size = 128
-		self.batch_size = 64 # args.batch_size 
+		self.batch_size = 32 # args.batch_size 
 		self.epochs = 1#20 # args.epochs
 		self.saved_model_pathway = args.saved_model_pathway
 		self.seed = args.seed
 		self.experiment_name = args.experiment_name
 		self.init_learning_rate = args.init_learning_rate
-		self.num_samples = 320
+		self.num_samples = 160
 
 		# Ensure reproducibility
 		if self.seed is not None:
