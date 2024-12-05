@@ -18,11 +18,12 @@ class Pipeline:
 		self.args = args
 		self.seq_size = 128
 		self.batch_size = 64 # args.batch_size 
-		self.epochs = 20 # args.epochs
+		self.epochs = 1#20 # args.epochs
 		self.saved_model_pathway = args.saved_model_pathway
 		self.seed = args.seed
 		self.experiment_name = args.experiment_name
 		self.init_learning_rate = args.init_learning_rate
+		self.num_samples = 320
 
 		# Ensure reproducibility
 		if self.seed is not None:
@@ -34,7 +35,7 @@ class Pipeline:
 
 	def load_dataset(self):
 		val_split = 0.2
-		self.dataset = Data(self.batch_size, self.seq_size, num_samples=10000)
+		self.dataset = Data(self.batch_size, self.seq_size, num_samples=self.num_samples)
 		self.dataset.load_dataset()
 		self.vocab_size = self.dataset.encode_data()
 		self.dataset.split_dataset(val_split)

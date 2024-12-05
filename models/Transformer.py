@@ -115,8 +115,8 @@ class Transformer(nn.Module):
                 next_token = torch.multinomial(probs, num_samples=1)
                 context_tokens = torch.cat((context_tokens, next_token), dim=1)
 
-                # Handle special end-of-sequence token
-                end_token = self.tokenizer.encode("<|endoftext|>")[0]
-                if next_token.item() == end_token:
-                    break
+                # # Handle special end-of-sequence token
+                # end_token = self.tokenizer.encode("<|endoftext|>")[0]
+                # if next_token.item() == end_token:
+                #     break
             return self.decode(context_tokens.squeeze(0))
