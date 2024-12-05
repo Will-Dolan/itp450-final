@@ -35,10 +35,12 @@ class Pipeline:
 
 	def load_dataset(self):
 		val_split = 0.2
+		start=time.time()
 		self.dataset = Data(self.batch_size, self.seq_size, num_samples=self.num_samples)
 		self.dataset.load_dataset()
 		self.vocab_size = self.dataset.encode_data()
 		self.dataset.split_dataset(val_split)
+		print(f'Data loading took {time.time()-start} seconds')
 
 	def load_model(self):
 		pass
