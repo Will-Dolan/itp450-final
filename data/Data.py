@@ -36,7 +36,7 @@ class Data:
 		print("Encoding data...")
 		for text in tqdm(self.data_text):
 			encoded = self.encode(text['text'])
-			if(len(encoded) < self.seq_size): # TODO: add padding (optional)
+			if(len(encoded) <= self.seq_size): # TODO: add padding (optional)
 				context = encoded[0:-1]
 				target = encoded[1:]
 				self.data.append([context,target])

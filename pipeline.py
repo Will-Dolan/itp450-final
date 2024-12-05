@@ -77,7 +77,6 @@ class Pipeline:
 		losses = {'train': 0, 'val': 0}
 
 		# Training Loop
-		print("Training for {self.epochs} epochs...")
 		start=time.time()
 		for epoch in range(self.epochs):
 			self.model.train()
