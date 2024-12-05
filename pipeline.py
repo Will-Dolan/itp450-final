@@ -18,12 +18,12 @@ class Pipeline:
 		self.args = args
 		self.seq_size = 128
 		self.batch_size = 32 # args.batch_size 
-		self.epochs = 1#20 # args.epochs
+		self.epochs = 30 # args.epochs
 		self.saved_model_pathway = args.saved_model_pathway
 		self.seed = args.seed
 		self.experiment_name = args.experiment_name
 		self.init_learning_rate = args.init_learning_rate
-		self.num_samples = 160
+		self.num_samples = 10000
 
 		# Ensure reproducibility
 		if self.seed is not None:
@@ -49,11 +49,11 @@ class Pipeline:
 		torch.cuda.empty_cache()
 
 		# Finetuning parameters to improve training loss
-		embed_dim=512
+		embed_dim=1024
 		n_heads=8
 		n_layers=8
 		dropout=0.1 # hardcoded in MHA as 0
-		learning_rate = 0.0005
+		learning_rate=0.001
 		print_interval=100
 		eval_iters=200 # not used
 
@@ -112,4 +112,5 @@ class Pipeline:
 		context = torch.zeros((1, 1), dtype=torch.long, device=self.device)
 		response = self.model.generation(context, max_tokens=1000)
 		print(f'Inference took {time.time()-start} seconds')
+		print("---")
 		print(response)
