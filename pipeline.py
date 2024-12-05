@@ -108,7 +108,7 @@ class Pipeline:
 	def test_model(self):
 		start=time.time()
 		context  = torch.zeros((1, 1), dtype=torch.long, device=self.device)
-		response = self.model.generation(context, max_tokens=1000)[0].tolist()
+		response = self.model.generation(context, max_tokens=1000)[0]
 		print(f'Inference took {time.time()-start} seconds')
 		print('---')
 		print(self.dataset.decode(response))
