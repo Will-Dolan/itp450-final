@@ -102,11 +102,9 @@ class Transformer(nn.Module):
     #         context = torch.cat((context, next_token), dim=1) # (B, T+1)
     #     return context
 
-    def generation(self, context, max_tokens: int, temperature: float = 1.0) -> str:
+    def generation(self, context_tokens, max_tokens: int, temperature: float = 1.0) -> str:
         self.eval()
         with torch.no_grad():
-            if isinstance(context, str): context_tokens = self.encode(context).unsqueeze(0)
-            else: context_tokens = context
             for _ in range(max_tokens):
                 context_crop = context_tokens[:, -self.seq_size:]
                 y, _ = self(context_crop)
@@ -119,4 +117,4 @@ class Transformer(nn.Module):
                 # end_token = self.tokenizer.encode("<|endoftext|>")[0]
                 # if next_token.item() == end_token:
                 #     break
-            return self.decode(context_tokens.squeeze(0))
+            return self.decode(context_tokens)
