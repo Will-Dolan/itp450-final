@@ -79,28 +79,6 @@ class Transformer(nn.Module):
             loss    = F.cross_entropy(y, targets)
 
         return y, loss
-    
-    # def generation(self, context, max_tokens):
-    #     # context has dimensions of [B, T]
-    #     for _ in range(max_tokens):
-    #         # make sure the context fits in the sequence length
-    #         context_crop = context[:, -self.seq_size:]
-    #
-    #         # get the predictions
-    #         y, _ = self(context_crop)
-    #
-    #         # focus only on the last token
-    #         y = y[:, -1, :] # becomes (B, C)
-    #
-    #         # apply softmax to get probabilities
-    #         probs = F.softmax(y, dim=-1) # (B, C)
-    #
-    #         # sample from the distribution
-    #         next_token = torch.multinomial(probs, num_samples=1) # (B, 1)
-    #
-    #         # append the sample to the running sequence
-    #         context = torch.cat((context, next_token), dim=1) # (B, T+1)
-    #     return context
 
     def generation(self, context_tokens, max_tokens: int, temperature: float = 1.0) -> str:
         self.eval()

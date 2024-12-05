@@ -14,7 +14,7 @@ TODO:
 """
 
 class Pipeline:
-	def __init__(self, args):
+	def __init__(self, num_samples, args):
 		self.args = args
 		self.seq_size = 128
 		self.batch_size = 32 # args.batch_size 
@@ -23,7 +23,7 @@ class Pipeline:
 		self.seed = args.seed
 		self.experiment_name = args.experiment_name
 		self.init_learning_rate = args.init_learning_rate
-		self.num_samples = 10000
+		self.num_samples = num_samples
 
 		# Ensure reproducibility
 		if self.seed is not None:
@@ -54,7 +54,7 @@ class Pipeline:
 		n_layers=8
 		dropout=0.1 # hardcoded in MHA as 0
 		learning_rate=0.001
-		print_interval=100
+		print_interval=1 # print after every epoch
 		eval_iters=200 # not used
 
 		if torch.cuda.is_available():
@@ -102,7 +102,6 @@ class Pipeline:
 					_, val_losses = self.model(val_context, val_target)
 					losses['val'] = val_losses
 
-
 			if epoch % print_interval == 0 or epoch == self.epochs - 1 or epoch == 0:
 				print(f"[{(time.time()-start):.2f}s] step {epoch}: train loss {losses['train']}, val loss {losses['val']}")
     
@@ -111,7 +110,7 @@ class Pipeline:
 	def test_model(self):
 		start=time.time()
 		context = torch.zeros((1, 1), dtype=torch.long, device=self.device)
-		response = self.model.generation(context, max_tokens=1000)
+		response = self.model.generation(context, max_tokens=500)
 		print(f'Inference took {time.time()-start} seconds')
 		print("---")
 		print(response)
