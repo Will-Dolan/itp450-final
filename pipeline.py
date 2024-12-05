@@ -14,16 +14,16 @@ TODO:
 """
 
 class Pipeline:
-	def __init__(self, num_samples, args):
+	def __init__(self, args):
 		self.args = args
-		self.seq_size = 128
-		self.batch_size = 32 # args.batch_size 
+		self.seq_size = 512
+		self.batch_size = 64 # args.batch_size 
 		self.epochs = 30 # args.epochs
 		self.saved_model_pathway = args.saved_model_pathway
 		self.seed = args.seed
 		self.experiment_name = args.experiment_name
 		self.init_learning_rate = args.init_learning_rate
-		self.num_samples = num_samples
+		self.num_samples = 10000
 
 		# Ensure reproducibility
 		if self.seed is not None:
@@ -49,11 +49,11 @@ class Pipeline:
 		torch.cuda.empty_cache()
 
 		# Finetuning parameters to improve training loss
-		embed_dim=1024
+		embed_dim=512
 		n_heads=8
 		n_layers=8
 		dropout=0.1 # hardcoded in MHA as 0
-		learning_rate=0.001
+		learning_rate=0.0005
 		print_interval=1 # print after every epoch
 		eval_iters=200 # not used
 
