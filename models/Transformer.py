@@ -106,7 +106,7 @@ class Transformer(nn.Module):
         self.eval()
         with torch.no_grad():
             if isinstance(context, str): context_tokens = self.encode(context).unsqueeze(0)
-            else: context_tokens = context.unsqueeze(0)
+            else: context_tokens = context
             for _ in range(max_tokens):
                 context_crop = context_tokens[:, -self.seq_size:]
                 y, _ = self(context_crop)
