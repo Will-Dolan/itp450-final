@@ -99,7 +99,7 @@ class Pipeline:
 					losses['val'] = val_losses
 
 
-			if epoch % print_interval == 0 or epoch == n_epoch - 1 or epoch == 0:
+			if epoch % print_interval == 0 or epoch == self.epochs - 1 or epoch == 0:
 				print(f"[{(time.time()-start):.2f}s] step {epoch}: train loss {losses['train']}, val loss {losses['val']}")
     
 		print(f'Training took {time.time()-start} seconds')
