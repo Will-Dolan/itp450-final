@@ -111,4 +111,4 @@ class Pipeline:
 		response = self.model.generation(context, max_tokens=1000)[0]
 		print(f'Inference took {time.time()-start} seconds')
 		print('---')
-		print(self.dataset.decode(response))
+		print(response)
