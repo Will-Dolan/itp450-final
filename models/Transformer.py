@@ -112,7 +112,6 @@ class Transformer(nn.Module):
                 y = y[:, -1, :]
                 probs = F.softmax(y / temperature, dim=-1)
                 next_token = torch.multinomial(probs, num_samples=1)
-                print(context_tokens.shape, next_token.shape)
                 context_tokens = torch.cat((context_tokens, next_token), dim=1)
 
                 # # Handle special end-of-sequence token

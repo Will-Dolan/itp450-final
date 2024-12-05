@@ -110,9 +110,6 @@ class Pipeline:
 	def test_model(self):
 		start=time.time()
 		context = torch.zeros((1, 1), dtype=torch.long, device=self.device)
-		responses = self.model.generation(context, max_tokens=1000)
+		response = self.model.generation(context, max_tokens=1000)
 		print(f'Inference took {time.time()-start} seconds')
-		print_responses = 5		
-		for i in range(print_responses):
-			print('---')
-			print(responses[i])
+		print(response)
