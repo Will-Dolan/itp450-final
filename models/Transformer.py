@@ -104,7 +104,6 @@ class Transformer(nn.Module):
 
     def generation(self, context_tokens, max_tokens: int, temperature: float = 1.0) -> str:
         self.eval()
-        print(context_tokens)
         with torch.no_grad():
             for _ in range(max_tokens):
                 context_crop = context_tokens[:, -self.seq_size:]
