@@ -49,11 +49,10 @@ class Pipeline:
 		torch.cuda.empty_cache()
 
 		# Finetuning parameters to improve training loss
-		embed_dim=512
-		n_heads=8
-		n_layers=8
-		dropout=0.1 # hardcoded in MHA as 0
-		learning_rate=0.0005
+		embed_dim=768
+		n_heads=12
+		n_layers=12
+		learning_rate=1e-4
 		print_interval=1 # print after every epoch
 		eval_iters=200 # not used
 
