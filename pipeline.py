@@ -1,5 +1,6 @@
 import time
 import numpy as np
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -73,7 +74,8 @@ class Pipeline:
 
 		# Optimizer
 		optimizer = torch.optim.AdamW(self.model.parameters(),lr=learning_rate)
-		losses = {'train': 0, 'val': 0}
+		train_losses = []
+		val_losses = []
 
 		# Training Loop
 		start=time.time()
@@ -86,22 +88,32 @@ class Pipeline:
 				target.to(self.device)
 
 				# pass through the model (context,target)
-				_, train_losses = self.model(context, target)
-				losses['train'] = train_losses
-				train_losses.backward()
+				_, train_loss = self.model(context, target)
+				train_losses.append(train_loss)
+				train_loss.backward()
 				optimizer.step()
 
 			with torch.no_grad():
 				for val_context, val_target in self.dataset.val_dataloader:
 					val_context = val_context.to(self.device)
 					val_target = val_target.to(self.device)
-					_, val_losses = self.model(val_context, val_target)
-					losses['val'] = val_losses
+					_, val_loss = self.model(val_context, val_target)
+					val_losses.append(val_loss)
 
 			if epoch % print_interval == 0 or epoch == self.epochs - 1 or epoch == 0:
-				print(f"[{(time.time()-start):.2f}s] step {epoch}: train loss {losses['train']}, val loss {losses['val']}")
+				print(f"[{(time.time()-start):.2f}s] step {epoch}: train loss {train_loss}, val loss {val_loss}")
     
 		print(f'Training took {time.time()-start} seconds')
+		self.plot_loss(train_losses, val_losses)
+
+	def plot_loss(self, train_losses, val_losses, fig_title='loss.png'):
+		x_vals = [x for x in range(self.epochs)]
+		plt.plot(x_vals, train_losses, ["Training Loss"])
+		plt.plot(x_vals, val_losses, ["Validation Loss"])
+		plt.xlabel("Epochs")
+		plt.ylabel("Cross-Entropy Loss")
+		plt.title("Training and Validation Loss Curves")
+		plt.savefig(fig_title)
 
 	def test_model(self):
 		start=time.time()
