@@ -105,6 +105,7 @@ class Pipeline:
     
 		print(f'Training took {time.time()-start} seconds')
 		self.plot_loss(train_losses, val_losses)
+		torch.save(self.model.state_dict(), "model.pth")
 
 	def plot_loss(self, train_losses, val_losses, fig_title='loss.png'):
 		x_vals = [x for x in range(self.epochs)]
