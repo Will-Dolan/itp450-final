@@ -16,7 +16,7 @@ TODO:
 class Pipeline:
 	def __init__(self, args):
 		self.args = args
-		self.seq_size = 512
+		self.seq_size = 1024
 		self.batch_size = 64 # args.batch_size 
 		self.epochs = 30 # args.epochs
 		self.saved_model_pathway = args.saved_model_pathway
@@ -82,7 +82,6 @@ class Pipeline:
 			optimizer.zero_grad()
 			print("Epoch " + str(epoch))
 			for context, target in tqdm(self.dataset.train_dataloader):
-				# context, target=self.dataset.get_batch('train')
 				context.to(self.device)
 				target.to(self.device)
 
@@ -94,7 +93,6 @@ class Pipeline:
 
 			with torch.no_grad():
 				for val_context, val_target in self.dataset.val_dataloader:
-					# val_context, val_target = self.dataset.get_batch('val')
 					val_context = val_context.to(self.device)
 					val_target = val_target.to(self.device)
 					_, val_losses = self.model(val_context, val_target)
