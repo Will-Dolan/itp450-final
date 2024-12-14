@@ -17,7 +17,7 @@ TODO:
 class Pipeline:
 	def __init__(self, args):
 		self.args = args
-		self.seq_size = 100
+		self.seq_size = 128
 		self.batch_size = 64 # args.batch_size 
 		self.epochs = 30 # args.epochs
 		self.saved_model_pathway = args.saved_model_pathway
