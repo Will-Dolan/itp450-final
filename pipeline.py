@@ -19,7 +19,7 @@ class Pipeline:
 		self.args = args
 		self.seq_size = 128
 		self.batch_size = 64 # args.batch_size 
-		self.epochs = 30 # args.epochs
+		self.epochs = 1 # args.epochs
 		self.saved_model_pathway = args.saved_model_pathway
 		self.seed = args.seed
 		self.experiment_name = args.experiment_name
@@ -107,13 +107,16 @@ class Pipeline:
     
 			if epoch % print_interval == 0 or epoch == self.epochs - 1 or epoch == 0:
 				print(f"[{(time.time()-start):.2f}s] step {epoch}: train loss {train_loss}, val loss {val_loss}")
-				self.plot_loss(train_losses, val_losses, epoch)
+				with open("train_losses.txt", "w") as file: file.write(" ".join(train_losses) + "\n")
+				with open("val_losses.txt", "w") as file: file.write(" ".join(val_losses) + "\n")
     
 		print(f'Training took {time.time()-start} seconds')
 		if save_model: torch.save(self.model.state_dict(), model_path)
 
-	def plot_loss(self, train_losses, val_losses, epoch, fig_title='loss.png'):
-		x_vals = [x for x in range(epoch+1)]
+	def plot_loss(self, fig_title='loss.png'):
+		x_vals = [x for x in range(self.epochs)]
+		train_losses = np.loadtxt('train_losses.txt', delimiter=' ')
+		val_losses = np.loadtxt('val_losses.txt', delimiter=' ')
 		plt.plot(x_vals, train_losses, ["Training Loss"])
 		plt.plot(x_vals, val_losses, ["Validation Loss"])
 		plt.xlabel("Epochs")
@@ -128,7 +131,7 @@ class Pipeline:
 		start=time.time()
 		# context = torch.zeros((1, 1), dtype=torch.long, device=self.device)
 		sample_idx = 0
-		context = self.dataset.val_data[sample_idx][0]
+		context = self.dataset.val_data[sample_idx][0][np.newaxis, :]
 		response = self.model.generation(context, max_tokens=500)
 		print(f'Inference took {time.time()-start} seconds')
 		print("---")
