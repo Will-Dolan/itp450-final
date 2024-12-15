@@ -46,7 +46,7 @@ class Pipeline:
 	def load_model(self):
 		pass
 
-	def train_model(self):
+	def train_model(self, save_model=True):
 		torch.cuda.empty_cache()
 
 		# Finetuning parameters to improve training loss
@@ -89,7 +89,7 @@ class Pipeline:
 
 				# pass through the model (context,target)
 				_, train_loss = self.model(context, target)
-				train_losses.append(train_loss)
+				train_losses.append(train_loss.item())
 				train_loss.backward()
 				optimizer.step()
 
@@ -98,14 +98,14 @@ class Pipeline:
 					val_context = val_context.to(self.device)
 					val_target = val_target.to(self.device)
 					_, val_loss = self.model(val_context, val_target)
-					val_losses.append(val_loss)
+					val_losses.append(val_loss.item())
 
 			if epoch % print_interval == 0 or epoch == self.epochs - 1 or epoch == 0:
 				print(f"[{(time.time()-start):.2f}s] step {epoch}: train loss {train_loss}, val loss {val_loss}")
+				self.plot_loss(train_losses, val_losses)
     
 		print(f'Training took {time.time()-start} seconds')
-		self.plot_loss(train_losses, val_losses)
-		torch.save(self.model.state_dict(), "model.pth")
+		if save_model: torch.save(self.model.state_dict(), "model.pth")
 
 	def plot_loss(self, train_losses, val_losses, fig_title='loss.png'):
 		x_vals = [x for x in range(self.epochs)]
