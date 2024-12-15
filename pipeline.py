@@ -109,10 +109,8 @@ class Pipeline:
 				print(f"[{(time.time()-start):.2f}s] step {epoch}: train loss {train_loss}, val loss {val_loss}")
 				with open("train_losses.txt", "w") as file: 
 					for loss in train_losses: file.write(str(loss) + ' ')
-					file.write('\n')
 				with open("val_losses.txt", "w") as file:
 					for loss in val_losses: file.write(str(loss) + ' ')
-					file.write('\n')
     
 		print(f'Training took {time.time()-start} seconds')
 		if save_model: torch.save(self.model.state_dict(), model_path)
