@@ -74,6 +74,7 @@ class Pipeline:
 
 		# Optimizer
 		optimizer = torch.optim.AdamW(self.model.parameters(),lr=self.learning_rate)
+		curr_epochs = []
 		train_losses = []
 		val_losses = []
 
@@ -83,23 +84,27 @@ class Pipeline:
 			self.model.train()
 			optimizer.zero_grad()
 			print("Epoch " + str(epoch))
-			for context, target in tqdm(self.dataset.train_dataloader):
+			train_loss = 0
+			for batch, (context, target) in tqdm(enumerate(self.dataset.train_dataloader)):
 				context.to(self.device)
 				target.to(self.device)
-
-				# pass through the model (context,target)
-				_, train_loss = self.model(context, target)
-				train_losses.append(train_loss.item())
-				train_loss.backward()
+				_, loss = self.model(context, target)
+				loss.backward()
 				optimizer.step()
-
+				train_loss += loss.item()
+			train_loss /= (batch+1)
+			train_losses.append(train_loss)
+   
 			with torch.no_grad():
-				for val_context, val_target in self.dataset.val_dataloader:
+				val_loss = 0
+				for val_batch, (val_context, val_target) in tqdm(enumerate(self.dataset.val_dataloader)):
 					val_context = val_context.to(self.device)
 					val_target = val_target.to(self.device)
-					_, val_loss = self.model(val_context, val_target)
-					val_losses.append(val_loss.item())
-
+					_, loss = self.model(val_context, val_target)
+					val_loss += loss.item()
+				val_loss /= (val_batch+1)
+				val_losses.append(val_loss)
+    
 			if epoch % print_interval == 0 or epoch == self.epochs - 1 or epoch == 0:
 				print(f"[{(time.time()-start):.2f}s] step {epoch}: train loss {train_loss}, val loss {val_loss}")
 				self.plot_loss(train_losses, val_losses, epoch)
@@ -107,8 +112,8 @@ class Pipeline:
 		print(f'Training took {time.time()-start} seconds')
 		if save_model: torch.save(self.model.state_dict(), model_path)
 
-	def plot_loss(self, train_losses, val_losses, epochs, fig_title='loss.png'):
-		x_vals = [x for x in range(epochs)]
+	def plot_loss(self, train_losses, val_losses, epoch, fig_title='loss.png'):
+		x_vals = [x for x in range(epoch+1)]
 		plt.plot(x_vals, train_losses, ["Training Loss"])
 		plt.plot(x_vals, val_losses, ["Validation Loss"])
 		plt.xlabel("Epochs")
