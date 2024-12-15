@@ -36,8 +36,8 @@ class Data:
 		print("Encoding data...")
 		for text in tqdm(self.data_text):
 			encoded = self.encode(text['text'])
-			if(len(encoded) <= self.seq_size): # TODO: add padding (optional)
-				print("Need to add padding on sequence of size " + str(len(encoded)) + "!")
+			if(len(encoded) <= self.seq_size):
+				print("FIX: Need to add padding on sequence of size " + str(len(encoded)) + "!")
 				context = encoded[0:-1]
 				target = encoded[1:]
 				self.data.append([context,target])
@@ -70,22 +70,3 @@ class Data:
 		self.train_data = self.data[int(self.num_samples*val_split):]
 		self.val_dataloader = DataLoader(self.val_data, batch_size=self.batch_size, shuffle=True)
 		self.train_dataloader = DataLoader(self.train_data, batch_size=self.batch_size, shuffle=True)
-
-	# def get_batch(self, split):
-	# 	data = self.train_data_enc if split=='train' else self.val_data_enc
-
-	# 	# Randomly select starting indices for the batch (0, len(data)-seq_size)
-	# 	# Do it for batch_size number of times and store in a torch vector
-	# 	start_ind = torch.randint(0,len(data)-self.seq_size,(self.batch_size,))
-	# 	#print(f'start_ind={start_ind}')
-		
-	# 	context=[]
-	# 	target=[]
-	# 	for i in start_ind:
-	# 		context.append(data[i  :i+self.seq_size  ])
-	# 		target.append (data[i+1:i+self.seq_size+1])
-		
-	# 	context = torch.stack(context) #converts from a list of tensors to a large tensor
-	# 	target  = torch.stack(target)
-
-	# 	return context, target

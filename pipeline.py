@@ -25,6 +25,10 @@ class Pipeline:
 		self.experiment_name = args.experiment_name
 		self.init_learning_rate = args.init_learning_rate
 		self.num_samples = 10000
+		self.embed_dim = 768
+		self.n_heads = 12
+		self.n_layers = 12
+		self.learning_rate = 1e-4
 
 		# Ensure reproducibility
 		if self.seed is not None:
@@ -46,14 +50,10 @@ class Pipeline:
 	def load_model(self):
 		pass
 
-	def train_model(self, save_model=True):
+	def train_model(self, save_model=True, model_path="model.pth"):
 		torch.cuda.empty_cache()
 
 		# Finetuning parameters to improve training loss
-		embed_dim=768
-		n_heads=12
-		n_layers=12
-		learning_rate=1e-4
 		print_interval=1 # print after every epoch
 		eval_iters=200 # not used
 
@@ -64,7 +64,7 @@ class Pipeline:
 		print('Running on', self.device)
 
 		# Instantiating the Transformer module
-		self.model = Transformer(embed_dim, n_heads, self.vocab_size, self.seq_size, n_layers, self.device)
+		self.model = Transformer(self.embed_dim, self.n_heads, self.vocab_size, self.seq_size, self.n_layers, self.device)
 
 		self.model = self.model.to(self.device)
 
@@ -73,7 +73,7 @@ class Pipeline:
 		print('Parameters size:', len(list(self.model.parameters())))
 
 		# Optimizer
-		optimizer = torch.optim.AdamW(self.model.parameters(),lr=learning_rate)
+		optimizer = torch.optim.AdamW(self.model.parameters(),lr=self.learning_rate)
 		train_losses = []
 		val_losses = []
 
@@ -102,13 +102,13 @@ class Pipeline:
 
 			if epoch % print_interval == 0 or epoch == self.epochs - 1 or epoch == 0:
 				print(f"[{(time.time()-start):.2f}s] step {epoch}: train loss {train_loss}, val loss {val_loss}")
-				self.plot_loss(train_losses, val_losses)
+				self.plot_loss(train_losses, val_losses, epoch)
     
 		print(f'Training took {time.time()-start} seconds')
-		if save_model: torch.save(self.model.state_dict(), "model.pth")
+		if save_model: torch.save(self.model.state_dict(), model_path)
 
-	def plot_loss(self, train_losses, val_losses, fig_title='loss.png'):
-		x_vals = [x for x in range(self.epochs)]
+	def plot_loss(self, train_losses, val_losses, epochs, fig_title='loss.png'):
+		x_vals = [x for x in range(epochs)]
 		plt.plot(x_vals, train_losses, ["Training Loss"])
 		plt.plot(x_vals, val_losses, ["Validation Loss"])
 		plt.xlabel("Epochs")
@@ -116,9 +116,14 @@ class Pipeline:
 		plt.title("Training and Validation Loss Curves")
 		plt.savefig(fig_title)
 
-	def test_model(self):
+	def test_model(self, load_model=False, model_path="model.pth"):
+		if load_model: 
+			self.model = Transformer(self.embed_dim, self.n_heads, self.vocab_size, self.seq_size, self.n_layers, self.device)
+			self.model.load_state_dict(torch.load(model_path, weights_only=True))
 		start=time.time()
-		context = torch.zeros((1, 1), dtype=torch.long, device=self.device)
+		# context = torch.zeros((1, 1), dtype=torch.long, device=self.device)
+		sample_idx = 0
+		context = self.dataset.val_data[sample_idx][0]
 		response = self.model.generation(context, max_tokens=500)
 		print(f'Inference took {time.time()-start} seconds')
 		print("---")
