@@ -109,8 +109,10 @@ class Pipeline:
 				print(f"[{(time.time()-start):.2f}s] step {epoch}: train loss {train_loss}, val loss {val_loss}")
 				with open("train_losses.txt", "w") as file: 
 					for loss in train_losses: file.write(str(loss) + ' ')
+					file.write('\n')
 				with open("val_losses.txt", "w") as file:
 					for loss in val_losses: file.write(str(loss) + ' ')
+					file.write('\n')
     
 		print(f'Training took {time.time()-start} seconds')
 		if save_model: torch.save(self.model.state_dict(), model_path)
@@ -133,7 +135,7 @@ class Pipeline:
 		start=time.time()
 		# context = torch.zeros((1, 1), dtype=torch.long, device=self.device)
 		sample_idx = 0
-		context = self.dataset.val_data[sample_idx][0][np.newaxis, :]
+		context = self.dataset.val_data[sample_idx][0][np.newaxis, :].to(self.device)
 		response = self.model.generation(context, max_tokens=500)
 		print(f'Inference took {time.time()-start} seconds')
 		print("---")
