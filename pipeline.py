@@ -19,7 +19,7 @@ class Pipeline:
 		self.args = args
 		self.seq_size = 128
 		self.batch_size = 64 # args.batch_size 
-		self.epochs = 1 # args.epochs
+		self.epochs = 30 # args.epochs
 		self.saved_model_pathway = args.saved_model_pathway
 		self.seed = args.seed
 		self.experiment_name = args.experiment_name
@@ -28,7 +28,7 @@ class Pipeline:
 		self.embed_dim = 768
 		self.n_heads = 12
 		self.n_layers = 12
-		self.learning_rate = 1e-4
+		self.learning_rate = 1e-3
 
 		# Ensure reproducibility
 		if self.seed is not None:
@@ -133,8 +133,7 @@ class Pipeline:
 			self.model = Transformer(self.embed_dim, self.n_heads, self.vocab_size, self.seq_size, self.n_layers, self.device)
 			self.model.load_state_dict(torch.load(model_path, weights_only=True))
 		start=time.time()
-		# context = torch.zeros((1, 1), dtype=torch.long, device=self.device)
-		sample_idx = 0
+		sample_idx = 1
 		context = self.dataset.val_data[sample_idx][0][np.newaxis, :]
 		response = self.model.generation(context, max_tokens=500)
 		print(f'Inference took {time.time()-start} seconds')
