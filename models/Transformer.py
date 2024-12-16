@@ -83,12 +83,14 @@ class Transformer(nn.Module):
     def generation(self, context_tokens, max_tokens: int, temperature: float = 1.0) -> str:
         self.eval()
         with torch.no_grad():
+            print(context_tokens.device)
             for _ in range(max_tokens):
                 context_crop = context_tokens[:, -self.seq_size:]
                 y, _ = self(context_crop)
                 y = y[:, -1, :]
                 probs = F.softmax(y / temperature, dim=-1)
                 next_token = torch.multinomial(probs, num_samples=1).to(self.device)
+                print(next_token.device)
                 context_tokens = torch.cat((context_tokens, next_token), dim=1)
 
                 # # Handle special end-of-sequence token
