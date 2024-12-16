@@ -19,6 +19,7 @@ def config_parser():
 
 
 if __name__ == '__main__':
+    print("TEST")
     # pseudocode
     parser = config_parser()
     args = parser.parse_args()
