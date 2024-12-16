@@ -136,8 +136,6 @@ class Pipeline:
 		# context = torch.zeros((1, 1), dtype=torch.long, device=self.device)
 		sample_idx = 0
 		context = self.dataset.val_data[sample_idx][0][np.newaxis, :]
-		print(context)
-		print("---")
 		context.to(self.device)
 		response = self.model.generation(context, max_tokens=500)
 		print(f'Inference took {time.time()-start} seconds')

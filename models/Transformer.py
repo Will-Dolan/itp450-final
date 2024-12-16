@@ -88,7 +88,7 @@ class Transformer(nn.Module):
                 y, _ = self(context_crop)
                 y = y[:, -1, :]
                 probs = F.softmax(y / temperature, dim=-1)
-                next_token = torch.multinomial(probs, num_samples=1)
+                next_token = torch.multinomial(probs, num_samples=1).to(self.device)
                 context_tokens = torch.cat((context_tokens, next_token), dim=1)
 
                 # # Handle special end-of-sequence token
