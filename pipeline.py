@@ -8,14 +8,9 @@ from models.Transformer import Transformer
 from tqdm import tqdm
 from data.Data import Data
 
-""" 
-TODO: 
-- make all errored variables configurable
-- load model separate from train
-"""
-
 class Pipeline:
 	def __init__(self, args):
+		print("Initializing pipeline")
 		self.args = args
 		self.seq_size = 128
 		self.batch_size = 64 # args.batch_size 
