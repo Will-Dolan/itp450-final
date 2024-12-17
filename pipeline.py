@@ -14,18 +14,22 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 class Pipeline:
 	def __init__(self, args):
 		print("Initializing pipeline")
+
+		# defaults are configured in main.py
 		self.args = args
-		self.seq_size = 128
-		self.batch_size = 64 # args.batch_size 
-		self.epochs = 30 # args.epochs
+
+		self.seq_size = args.seq_size
+		self.batch_size = args.batch_size 
+
+		self.epochs = args.epochs
 		self.saved_model_pathway = args.saved_model_pathway
 		self.seed = args.seed
-		self.experiment_name = args.experiment_name
+		
 		self.init_learning_rate = args.init_learning_rate
 		self.num_samples = 10000
 		self.embed_dim = 768
-		self.n_heads = 32
-		self.n_layers = 32
+		self.n_heads = args.num_heads
+		self.n_layers = args.num_layers
 		self.learning_rate = 1e-4
 
 		self.distributed = False
@@ -48,11 +52,11 @@ class Pipeline:
 			self.distributed = True
 
 			rank		  = int(os.environ["SLURM_PROCID"])
-			world_size	= int(os.environ["WORLD_SIZE"])
+			world_size	  = int(os.environ["WORLD_SIZE"])
 			gpus_per_node = int(os.environ["SLURM_GPUS_ON_NODE"])
 			assert gpus_per_node == torch.cuda.device_count()
 
-			print(f"Hello from rank {rank} of {world_size}  where there are" \
+			print(f"Hello from rank {rank+1} of {world_size}  where there are" \
 				f" {gpus_per_node} allocated GPUs per node.", flush=True)
 
 			dist.init_process_group("nccl", rank=rank, world_size=world_size)
@@ -60,7 +64,7 @@ class Pipeline:
 
 			self.local_rank = rank - gpus_per_node * (rank // gpus_per_node)
 			torch.cuda.set_device(self.local_rank)
-			self.device = self.local_rank # for clarity with train_model
+			self.device = self.local_rank # for clarity with ddp or single gpu
 			self.rank = rank
 
 	def load_dataset(self):
@@ -78,8 +82,6 @@ class Pipeline:
 		self.model = self.model.to(self.device)
 		
 		if self.distributed:
-			# Wrap model in DistributedDataParallel
-
 			self.model = DDP(self.model, device_ids=[self.local_rank])
 		
 		if self.rank == 0:  # Only print on main process
@@ -94,9 +96,6 @@ class Pipeline:
 
 		# Finetuning parameters to improve training loss
 		print_interval=1 # print after every epoch
-		eval_iters=200 # not used
-
-		curr_epochs = []
 		train_losses = []
 		val_losses = []
 
@@ -105,9 +104,10 @@ class Pipeline:
 		for epoch in range(self.epochs):
 			self.model.train()
 			self.optimizer.zero_grad()
-			print("Epoch " + str(epoch))
+			if self.rank == 0:
+				print("Epoch " + str(epoch))
 			train_loss = 0
-			for batch, (context, target) in tqdm(enumerate(self.dataset.train_dataloader)):
+			for batch, (context, target) in enumerate(self.dataset.train_dataloader):
 				context.to(self.device)
 				target.to(self.device)
 				_, loss = self.model(context, target)
@@ -119,7 +119,7 @@ class Pipeline:
    
 			with torch.no_grad():
 				val_loss = 0
-				for val_batch, (val_context, val_target) in tqdm(enumerate(self.dataset.val_dataloader)):
+				for val_batch, (val_context, val_target) in enumerate(self.dataset.val_dataloader):
 					val_context = val_context.to(self.device)
 					val_target = val_target.to(self.device)
 					_, loss = self.model(val_context, val_target)
@@ -128,7 +128,8 @@ class Pipeline:
 				val_losses.append(val_loss)
 		
 			if epoch % print_interval == 0 or epoch == self.epochs - 1 or epoch == 0:
-				print(f"[{(time.time()-start):.2f}s] step {epoch}: train loss {train_loss}, val loss {val_loss}")
+				if self.rank == 0:
+					print(f"[{(time.time()-start):.2f}s] step {epoch}: train loss {train_loss}, val loss {val_loss}")
 				with open("train_losses.txt", "w") as file: 
 					for loss in train_losses: file.write(str(loss) + ' ')
 					file.write('\n')
@@ -136,7 +137,8 @@ class Pipeline:
 					for loss in val_losses: file.write(str(loss) + ' ')
 					file.write('\n')
 		
-		print(f'Training took {time.time()-start} seconds')
+		if self.rank == 0:
+			print(f'Training took {time.time()-start} seconds')
 		if save_model: torch.save(self.model.state_dict(), model_path)
 
 	def plot_loss(self, fig_title='loss.png'):
@@ -158,11 +160,13 @@ class Pipeline:
 		sample_idx = 1
 		context = self.dataset.val_data[sample_idx][0][np.newaxis, :]
 		response = self.model.generation(context, max_tokens=500)
-		print(f'Inference took {time.time()-start} seconds')
-		print("---")
-		print(response)
+		if self.rank == 0:
+			print(f'Inference took {time.time()-start} seconds')
+			print("---")
+			print(response)
 
 	def cleanup(self):
 		if self.distributed and dist.is_initialized():
 			dist.destroy_process_group()
-			print("Cleaned up distributed process group")
+			if self.rank == 0:
+				print("Cleaned up distributed process group")

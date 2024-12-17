@@ -5,15 +5,15 @@ import argparse
 def config_parser():
     configuration_parser = argparse.ArgumentParser()
     # defaults
-    configuration_parser.add_argument("-e", "--epochs", type=int, default=10, help="Training Epochs")
+    configuration_parser.add_argument("-e", "--epochs", type=int, default=30, help="Training Epochs")
     configuration_parser.add_argument("-smp", "--saved_model_pathway", type=str, default="", help="Saved Model Pathway")
-    configuration_parser.add_argument("-bs", "--batch_size", type=int, default=32, help="Batch Size")
+    configuration_parser.add_argument("-bs", "--batch_size", type=int, default=64, help="Batch Size")
+    configuration_parser.add_argument("-ss", "--seq_size", type=int, default=128, help="Sequence Size")
+    configuration_parser.add_argument("-nh", "--num_heads", type=int, default=12, help="Number of Attention Heads")
+    configuration_parser.add_argument("-nl", "--num_layers", type=int, default=12, help="Number of Layers")
 
     # necessary configuration
     configuration_parser.add_argument("-s", "--seed", type=int, help="Randomizer Seed")
-    configuration_parser.add_argument("-en", "--experiment_name", type=str, help="Experiment Name, for storage")
-    configuration_parser.add_argument("-ilr", "--init_learning_rate", type=float,
-                                      help="Initial Learning Rate for the optimizer")
 
     return configuration_parser
 
