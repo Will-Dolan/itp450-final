@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from models.Transformer import Transformer
-from tqdm import tqdm
 import os
 from data.Data import Data
 import torch.distributed as dist
@@ -25,7 +24,6 @@ class Pipeline:
 		self.saved_model_pathway = args.saved_model_pathway
 		self.seed = args.seed
 		
-		self.init_learning_rate = args.init_learning_rate
 		self.num_samples = 10000
 		self.embed_dim = 768
 		self.n_heads = args.num_heads
