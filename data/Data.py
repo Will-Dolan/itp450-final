@@ -22,7 +22,7 @@ class Data:
 	def load_dataset(self):
 		cores = multiprocessing.cpu_count()
 		# Load openwebtext dataset
-		print("Loading data...")
+		print(f"Loading data with {cores//2} cores...")
 		data_text = datasets.load_dataset('openwebtext', trust_remote_code=True, num_proc=cores//2)['train']
 		self.data_text = data_text.shuffle(seed=42).select(range(int(self.num_samples)))
 
