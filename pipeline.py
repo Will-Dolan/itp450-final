@@ -82,7 +82,7 @@ class Pipeline:
 		if self.distributed:
 			self.model = DDP(self.model, device_ids=[self.local_rank])
 		
-		if self.rank == 0:  # Only print on main process
+		if not self.distributed or self.rank == 0:  # Only print on main process
 			print(f"Num trainable params = {sum(p.numel() for p in self.model.parameters() if p.requires_grad)}")
 			print('Parameters size:', len(list(self.model.parameters())))
 
@@ -102,7 +102,7 @@ class Pipeline:
 		for epoch in range(self.epochs):
 			self.model.train()
 			self.optimizer.zero_grad()
-			if self.rank == 0:
+			if not self.distributed or self.rank == 0:
 				print("Epoch " + str(epoch))
 			train_loss = 0
 			for batch, (context, target) in enumerate(self.dataset.train_dataloader):
@@ -126,7 +126,7 @@ class Pipeline:
 				val_losses.append(val_loss)
 		
 			if epoch % print_interval == 0 or epoch == self.epochs - 1 or epoch == 0:
-				if self.rank == 0:
+				if not self.distributed or self.rank == 0:
 					print(f"[{(time.time()-start):.2f}s] step {epoch}: train loss {train_loss}, val loss {val_loss}")
 				with open("train_losses.txt", "w") as file: 
 					for loss in train_losses: file.write(str(loss) + ' ')
@@ -135,7 +135,7 @@ class Pipeline:
 					for loss in val_losses: file.write(str(loss) + ' ')
 					file.write('\n')
 		
-		if self.rank == 0:
+		if not self.distributed or self.rank == 0:
 			print(f'Training took {time.time()-start} seconds')
 		if save_model: torch.save(self.model.state_dict(), model_path)
 
@@ -158,7 +158,7 @@ class Pipeline:
 		sample_idx = 1
 		context = self.dataset.val_data[sample_idx][0][np.newaxis, :]
 		response = self.model.generation(context, max_tokens=500)
-		if self.rank == 0:
+		if not self.distributed or self.rank == 0:
 			print(f'Inference took {time.time()-start} seconds')
 			print("---")
 			print(response)
@@ -166,5 +166,5 @@ class Pipeline:
 	def cleanup(self):
 		if self.distributed and dist.is_initialized():
 			dist.destroy_process_group()
-			if self.rank == 0:
+			if not self.distributed or self.rank == 0:
 				print("Cleaned up distributed process group")
